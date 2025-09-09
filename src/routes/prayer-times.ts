@@ -6,10 +6,6 @@ import { find } from "geo-tz";
 import { toZonedTime, format } from "date-fns-tz";
 import NodeGeocoder from "node-geocoder";
 
-/**
- * Returns the actual file requested, on a best-effort basis as URL syntax may slightly vary.
- * Proxies through Supabase's CDN.
- */
 export default function route(): WRoute {
     return {
         url: "/prayer-times/:q?",
