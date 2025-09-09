@@ -7,7 +7,7 @@ Public API for Submission practices.
 ### Prayer Times
 
 ```
-https://practices.wikisubmission.org/practices/{LOCATION}
+https://practices.wikisubmission.org/prayer-times/{LOCATION}
 ```
 
 Returns live prayer times data for given location query (which can be a city, landmark, zip code, coordinate, etc).
