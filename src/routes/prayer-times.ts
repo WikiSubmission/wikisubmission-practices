@@ -62,7 +62,6 @@ export default function route(): WRoute {
                         });
                     }
 
-
                     const timezoneIdQuery = find(latitude, longitude);
 
                     if (!timezoneIdQuery || timezoneIdQuery.length === 0) {
@@ -74,7 +73,10 @@ export default function route(): WRoute {
 
                     const resolvedTimezoneId = timezoneIdQuery[0];
                     const now = new Date();
-                    const timeCalculator = new TimeCalculator(now, resolvedTimezoneId);
+                    
+                    // Get the current time in the local timezone for accurate calculations
+                    const localNow = toZonedTime(now, resolvedTimezoneId);
+                    const timeCalculator = new TimeCalculator(now, localNow, resolvedTimezoneId);
 
                     const prayerTimes = new PrayerTimes(
                         { latitude, longitude },
@@ -209,10 +211,12 @@ function capitalize(
 
 class TimeCalculator {
     private now: Date;
+    private localNow: Date;
     private timezoneId: string;
 
-    constructor(now: Date, timezoneId: string) {
+    constructor(now: Date, localNow: Date, timezoneId: string) {
         this.now = now;
+        this.localNow = localNow;
         this.timezoneId = timezoneId;
     }
 
@@ -224,23 +228,43 @@ class TimeCalculator {
 
     computeTimeDifference(prayerTime: Date | undefined): string {
         if (!prayerTime) return "N/A";
-        let diffMs = prayerTime.getTime() - this.now.getTime();
+        
+        // Convert prayer time to local timezone for accurate comparison
+        const localPrayerTime = toZonedTime(prayerTime, this.timezoneId);
+        let diffMs = localPrayerTime.getTime() - this.localNow.getTime();
+        
+        // If the prayer time has passed today, calculate time until next occurrence (tomorrow)
         if (diffMs < 0) {
-            diffMs += 24 * 60 * 60 * 1000; // Add 24 hours if prayer time has passed
+            diffMs += 24 * 60 * 60 * 1000; // Add 24 hours
         }
+        
         return this.formatTimeDifference(diffMs);
     }
 
     computeTimeElapsed(prayerTime: Date | undefined): string {
         if (!prayerTime) return "N/A";
-        const diffMs = this.now.getTime() - prayerTime.getTime();
-        return this.formatTimeDifference(diffMs);
+        
+        // Convert prayer time to local timezone for accurate comparison
+        const localPrayerTime = toZonedTime(prayerTime, this.timezoneId);
+        const diffMs = this.localNow.getTime() - localPrayerTime.getTime();
+        
+        // Return absolute value to avoid negative times
+        return this.formatTimeDifference(Math.abs(diffMs));
     }
 
     private formatTimeDifference(diffMs: number): string {
-        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-        const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        return `${diffHours}h ${diffMinutes}m`.replace(/-/g, "").replace("0h ", "");
+        // Ensure we're working with a positive number
+        const absDiffMs = Math.abs(diffMs);
+        
+        const diffHours = Math.floor(absDiffMs / (1000 * 60 * 60));
+        const diffMinutes = Math.floor((absDiffMs % (1000 * 60 * 60)) / (1000 * 60));
+        
+        // Format consistently: always show hours and minutes
+        if (diffHours === 0) {
+            return `${diffMinutes}m`;
+        }
+        
+        return `${diffHours}h ${diffMinutes}m`;
     }
 
     getLocalTimezoneName(): string {
@@ -256,7 +280,6 @@ class TimeCalculator {
     }
 
     getLocalTime(): string {
-        const zonedTime = toZonedTime(this.now, this.timezoneId);
-        return format(zonedTime, "h:mm a", { timeZone: this.timezoneId });
+        return format(this.localNow, "h:mm a", { timeZone: this.timezoneId });
     }
 }
