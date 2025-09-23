@@ -3,6 +3,8 @@ import { Server } from "./server";
 
 (async () => {
     try {
+        process.env.TZ = "America/Denver";
+        
         // [Environment]
         dotenv.config();
         Server.instance.log(
