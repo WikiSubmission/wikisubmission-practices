@@ -3,7 +3,7 @@ import { Server } from "./server";
 
 (async () => {
     try {
-        process.env.TZ = "America/Denver";
+        process.env.TZ = "UTC";
         
         // [Environment]
         dotenv.config();
