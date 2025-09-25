@@ -78,9 +78,10 @@ export default function route(): WRoute {
                     const localNow = toZonedTime(now, resolvedTimezoneId);
                     const timeCalculator = new TimeCalculator(now, localNow, resolvedTimezoneId);
 
+                    // Use localNow for prayer time calculations to ensure same date
                     const prayerTimes = new PrayerTimes(
                         { latitude, longitude },
-                        now,
+                        localNow,
                         CalculationMethod.Karachi()
                     );
 
@@ -125,13 +126,13 @@ export default function route(): WRoute {
                     let currentPrayer = prayerTimes.currentPrayer();
                     let upcomingPrayer = prayerTimes.nextPrayer();
 
-                    // Adjust "none" current / next prayer case. None is technically still Isha.
+                    // Handle "none" cases by determining current prayer based on actual time comparison
                     if (currentPrayer === "none") {
-                        currentPrayer = "isha";
+                        currentPrayer = determineCurrentPrayer(localNow, prayerTimesUTC, resolvedTimezoneId);
                     }
 
                     if (upcomingPrayer === "none") {
-                        upcomingPrayer = "fajr";
+                        upcomingPrayer = determineUpcomingPrayer(localNow, prayerTimesUTC, resolvedTimezoneId);
                     }
 
                     const currentPrayerTimeElapsed = timeCalculator.computeTimeElapsed(
@@ -281,5 +282,65 @@ class TimeCalculator {
 
     getLocalTime(): string {
         return format(this.localNow, "h:mm a", { timeZone: this.timezoneId });
+    }
+}
+
+function determineCurrentPrayer(
+    localNow: Date,
+    prayerTimes: { fajr: Date; dhuhr: Date; asr: Date; maghrib: Date; isha: Date; sunrise: Date; sunset: Date },
+    timezoneId: string
+): "fajr" | "dhuhr" | "asr" | "maghrib" | "isha" {
+    // Convert prayer times to local timezone for accurate comparison
+    const localFajr = toZonedTime(prayerTimes.fajr, timezoneId);
+    const localDhuhr = toZonedTime(prayerTimes.dhuhr, timezoneId);
+    const localAsr = toZonedTime(prayerTimes.asr, timezoneId);
+    const localMaghrib = toZonedTime(prayerTimes.maghrib, timezoneId);
+    const localIsha = toZonedTime(prayerTimes.isha, timezoneId);
+
+    const currentTime = localNow.getTime();
+
+    // Determine current prayer based on time ranges
+    if (currentTime >= localFajr.getTime() && currentTime < localDhuhr.getTime()) {
+        return "fajr";
+    } else if (currentTime >= localDhuhr.getTime() && currentTime < localAsr.getTime()) {
+        return "dhuhr";
+    } else if (currentTime >= localAsr.getTime() && currentTime < localMaghrib.getTime()) {
+        return "asr";
+    } else if (currentTime >= localMaghrib.getTime() && currentTime < localIsha.getTime()) {
+        return "maghrib";
+    } else {
+        // Before Fajr or after Isha - this is the Isha period
+        return "isha";
+    }
+}
+
+function determineUpcomingPrayer(
+    localNow: Date,
+    prayerTimes: { fajr: Date; dhuhr: Date; asr: Date; maghrib: Date; isha: Date; sunrise: Date; sunset: Date },
+    timezoneId: string
+): "fajr" | "dhuhr" | "asr" | "maghrib" | "isha" {
+    // Convert prayer times to local timezone for accurate comparison
+    const localFajr = toZonedTime(prayerTimes.fajr, timezoneId);
+    const localDhuhr = toZonedTime(prayerTimes.dhuhr, timezoneId);
+    const localAsr = toZonedTime(prayerTimes.asr, timezoneId);
+    const localMaghrib = toZonedTime(prayerTimes.maghrib, timezoneId);
+    const localIsha = toZonedTime(prayerTimes.isha, timezoneId);
+
+    const currentTime = localNow.getTime();
+
+    // Determine upcoming prayer based on current time
+    if (currentTime < localFajr.getTime()) {
+        return "fajr";
+    } else if (currentTime < localDhuhr.getTime()) {
+        return "dhuhr";
+    } else if (currentTime < localAsr.getTime()) {
+        return "asr";
+    } else if (currentTime < localMaghrib.getTime()) {
+        return "maghrib";
+    } else if (currentTime < localIsha.getTime()) {
+        return "isha";
+    } else {
+        // After Isha - next prayer is Fajr (tomorrow)
+        return "fajr";
     }
 }
