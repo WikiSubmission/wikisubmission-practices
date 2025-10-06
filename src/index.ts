@@ -10,11 +10,11 @@ import { Server } from "./server";
         Server.instance.log(
             `NODE_ENV: ${process.env.NODE_ENV || 'development (default)'}`,
         );
-        if (process.env.SUPABASE_URL && process.env.SUPABASE_API_KEY) {
-            Server.instance.log(`Environment variables loaded (supabase keys found)\n`);
+        if (process.env.GOOGLE_API_KEY) {
+            Server.instance.log(`Environment variables loaded (GOOGLE_API_KEY found)\n`);
         } else {
             Server.instance.error(
-                `Missing environment variables (SUPABASE_URL, SUPABASE_API_KEY)`,
+                `Missing environment variables (GOOGLE_API_KEY)`,
                 true,
             );
         }

@@ -1,10 +1,9 @@
 import { WRoute } from "../types/w-route";
 import { PrayerTimes, CalculationMethod } from "adhan";
 import { getQuery } from "../utils/get-query";
-import { getEnv } from "../utils/get-env";
 import { find } from "geo-tz";
 import { toZonedTime, format } from "date-fns-tz";
-import NodeGeocoder from "node-geocoder";
+import { geocodeWithCache } from "../utils/geocoding-cache";
 
 export default function route(): WRoute {
     return {
@@ -27,14 +26,8 @@ export default function route(): WRoute {
                     });
                 }
 
-                const GOOGLE_API_KEY = await getEnv("GOOGLE_API_KEY");
-                const geocoder = NodeGeocoder({
-                    provider: "google",
-                    apiKey: GOOGLE_API_KEY,
-                });
-
                 try {
-                    const geocoderResult = await geocoder.geocode(query);
+                    const geocoderResult = await geocodeWithCache(query);
 
                     if (geocoderResult.length === 0) {
                         return await reply.code(400).send({
@@ -73,7 +66,7 @@ export default function route(): WRoute {
 
                     const resolvedTimezoneId = timezoneIdQuery[0];
                     const now = new Date();
-                    
+
                     // Get the current time in the local timezone for accurate calculations
                     const localNow = toZonedTime(now, resolvedTimezoneId);
                     const timeCalculator = new TimeCalculator(now, localNow, resolvedTimezoneId);
@@ -184,6 +177,13 @@ export default function route(): WRoute {
                     return await reply.code(200).send(response);
 
                 } catch (error) {
+                    if (error instanceof Error && error.message.includes("geocoding failed")) {
+                        return await reply.code(400).send({
+                            error: "Location Not Found",
+                            description: `Could not find a location matching "${query}". Please try a different location or check your spelling.`,
+                        });
+                    }
+
                     return await reply.code(500).send({
                         error: "Internal Server Error",
                         message: error instanceof Error ? error.message : "Unknown error"
@@ -229,26 +229,26 @@ class TimeCalculator {
 
     computeTimeDifference(prayerTime: Date | undefined): string {
         if (!prayerTime) return "N/A";
-        
+
         // Convert prayer time to local timezone for accurate comparison
         const localPrayerTime = toZonedTime(prayerTime, this.timezoneId);
         let diffMs = localPrayerTime.getTime() - this.localNow.getTime();
-        
+
         // If the prayer time has passed today, calculate time until next occurrence (tomorrow)
         if (diffMs < 0) {
             diffMs += 24 * 60 * 60 * 1000; // Add 24 hours
         }
-        
+
         return this.formatTimeDifference(diffMs);
     }
 
     computeTimeElapsed(prayerTime: Date | undefined): string {
         if (!prayerTime) return "N/A";
-        
+
         // Convert prayer time to local timezone for accurate comparison
         const localPrayerTime = toZonedTime(prayerTime, this.timezoneId);
         const diffMs = this.localNow.getTime() - localPrayerTime.getTime();
-        
+
         // Return absolute value to avoid negative times
         return this.formatTimeDifference(Math.abs(diffMs));
     }
@@ -256,15 +256,15 @@ class TimeCalculator {
     private formatTimeDifference(diffMs: number): string {
         // Ensure we're working with a positive number
         const absDiffMs = Math.abs(diffMs);
-        
+
         const diffHours = Math.floor(absDiffMs / (1000 * 60 * 60));
         const diffMinutes = Math.floor((absDiffMs % (1000 * 60 * 60)) / (1000 * 60));
-        
+
         // Format consistently: always show hours and minutes
         if (diffHours === 0) {
             return `${diffMinutes}m`;
         }
-        
+
         return `${diffHours}h ${diffMinutes}m`;
     }
 
