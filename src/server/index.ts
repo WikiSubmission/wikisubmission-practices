@@ -136,7 +136,7 @@ export class Server {
                         let cacheKey = `${request.method}:${request.url}`;
                         
                         // For location-based routes, try to check cache with multiple possible keys
-                        if (route.url === "/prayer-times/*") {
+                        if (route.url === "/prayer-times/:q?") {
                             // Check if we have a cached entry for any normalized version of this location
                             const pathLocation = decodeURIComponent(request.url.replace(/^\/prayer-times\//, "").split("?")[0]);
                             if (pathLocation) {

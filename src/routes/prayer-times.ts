@@ -9,6 +9,10 @@ export default function route(): WRoute {
     return {
         url: "/prayer-times/:q?",
         method: "GET",
+        cache: {
+            duration: 3,
+            durationType: "seconds",
+        },
         handler: async (request, reply) => {
             try {
                 // Extract location from URL path (after /prayer-times/) or from query parameters
