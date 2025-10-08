@@ -6,7 +6,7 @@ export default function route(): WRoute {
         url: "*",
         method: "GET",
         handler: async (request: FastifyRequest, reply: FastifyReply) => {
-            return reply.code(404).send({
+            return reply.code(200).send({
                 status: "ok",
                 timestamp: new Date().toISOString()
             });
