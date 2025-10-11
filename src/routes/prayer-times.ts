@@ -308,9 +308,12 @@ function determineCurrentPrayer(
         return "asr";
     } else if (currentTime >= localMaghrib.getTime() && currentTime < localIsha.getTime()) {
         return "maghrib";
-    } else {
-        // Before Fajr or after Isha - this is the Isha period
+    } else if (currentTime >= localIsha.getTime()) {
+        // After Isha - this is the Isha period
         return "isha";
+    } else {
+        // Before Fajr - this is also the Fajr period (pre-dawn)
+        return "fajr";
     }
 }
 
