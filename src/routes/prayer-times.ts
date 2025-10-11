@@ -7,7 +7,7 @@ import { geocodeWithCache } from "../utils/geocoding-cache";
 
 export default function route(): WRoute {
     return {
-        url: "/prayer-times/:q?",
+        url: "/prayer-times/:q",
         method: "GET",
         cache: {
             duration: 3,
@@ -19,7 +19,7 @@ export default function route(): WRoute {
                 const pathLocation = decodeURIComponent(request.url.replace(/^\/prayer-times\//, "").split("?")[0]);
                 const query = pathLocation || getQuery(request.query, request.params);
 
-                if (!query) {
+                if (!query || query.length <= 2) {
                     return await reply.code(400).send({
                         error: "No location provided",
                         description: "Please provide a location either as a path parameter (/prayer-times/New York) or as a query parameter (?q=New York)",
