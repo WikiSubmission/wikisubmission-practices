@@ -7,7 +7,7 @@ import { geocodeWithCache } from "../utils/geocoding-cache";
 
 export default function route(): WRoute {
     return {
-        url: "/prayer-times/:q",
+        url: "/prayer-times/:q?",
         method: "GET",
         cache: {
             duration: 3,
