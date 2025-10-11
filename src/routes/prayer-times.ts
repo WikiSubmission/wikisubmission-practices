@@ -313,7 +313,7 @@ function determineCurrentPrayer(
         return "isha";
     } else {
         // Before Fajr - this is also the Fajr period (pre-dawn)
-        return "fajr";
+        return "isha";
     }
 }
 
