@@ -247,7 +247,17 @@ class TimeCalculator {
 
         // Convert prayer time to local timezone for accurate comparison
         const localPrayerTime = toZonedTime(prayerTime, this.timezoneId);
-        const diffMs = this.localNow.getTime() - localPrayerTime.getTime();
+        let diffMs = this.localNow.getTime() - localPrayerTime.getTime();
+
+        // Special handling for Isha period after midnight
+        // If we're in the Isha period after midnight, we need to calculate elapsed time
+        // from yesterday's Isha prayer, not today's (which hasn't happened yet)
+        if (diffMs < 0) {
+            // If the prayer time is in the future, we might be in the Isha period after midnight
+            // In this case, calculate elapsed time from yesterday's prayer time
+            const yesterdayPrayerTime = new Date(localPrayerTime.getTime() - 24 * 60 * 60 * 1000);
+            diffMs = this.localNow.getTime() - yesterdayPrayerTime.getTime();
+        }
 
         // Return absolute value to avoid negative times
         return this.formatTimeDifference(Math.abs(diffMs));
@@ -312,7 +322,7 @@ function determineCurrentPrayer(
         // After Isha - this is the Isha period
         return "isha";
     } else {
-        // Before Fajr - this is also the Fajr period (pre-dawn)
+        // Before Fajr - this is the Isha period (pre-dawn)
         return "isha";
     }
 }
