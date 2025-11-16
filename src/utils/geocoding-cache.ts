@@ -11,8 +11,8 @@ interface GeocodingCacheEntry {
 // In-memory cache for geocoding results
 class GeocodingCache {
     private cache = new Map<string, GeocodingCacheEntry>();
-    private maxSize = 1000; // Maximum number of cached entries
-    private defaultTTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    private maxSize = 10000; // Maximum number of cached entries
+    private defaultTTL = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
     set(key: string, result: any, ttl: number = this.defaultTTL): void {
         // Remove oldest entries if cache is full
