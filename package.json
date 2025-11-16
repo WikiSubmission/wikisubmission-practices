@@ -1,7 +1,7 @@
 {
-  "name": "wikisubmission-library",
+  "name": "wikisubmission-practices",
   "version": "1.0.0",
-  "description": "WikiSubmission Library",
+  "description": "WikiSubmission Practices",
   "main": "index.js",
   "scripts": {
     "clean": "rimraf ./build",
