@@ -6,6 +6,7 @@
   "scripts": {
     "clean": "rimraf ./build",
     "build": "npm run clean && tsc",
+    "dev": "npm run build && node build/index.js",
     "start": "npm run build && node build/index.js $*"
   },
   "engines": {
@@ -23,6 +24,7 @@
     "@supabase/supabase-js": "^2.49.8",
     "@types/node-geocoder": "^4.2.6",
     "adhan": "^4.4.3",
+    "astronomy-engine": "^2.1.19",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^16.6.1",
     "fastify": "^5.3.3",
