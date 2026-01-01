@@ -74,10 +74,14 @@ export default function route(): WRoute {
                         CalculationMethod.Karachi()
                     );
 
-                    // If requested, adjust Asr prayer time.
-                    const { asr_adjustment } = request.query as {
-                        asr_adjustment: string | undefined;
+                    // Extract query parameters
+                    const { asr_adjustment, include_schedule, highlight } = request.query as {
+                        asr_adjustment?: string;
+                        include_schedule?: string;
+                        highlight?: string;
                     };
+
+                    // If requested, adjust Asr prayer time.
                     if (asr_adjustment === "true") {
                         prayerTimes.asr = new Date(
                             (prayerTimes.dhuhr.getTime() + prayerTimes.sunset.getTime()) / 2,
@@ -130,13 +134,16 @@ export default function route(): WRoute {
                     const upcomingPrayerTimeLeft =
                         prayerTimeDifferences[`time_to_${upcomingPrayer}`];
 
-                    const { highlight } = request.query as { highlight?: string };
 
                     const statusString = `It's currently ${capitalize(
                         currentPrayer,
                         highlight === "true",
                     )}. ${capitalize(upcomingPrayer, highlight === "true")} in ${prayerTimeDifferences[`time_to_${upcomingPrayer}`]
                         }.`;
+
+                    const schedule = include_schedule === "true"
+                        ? generateSchedule(localNow, 30, latitude, longitude, resolvedTimezoneId, asr_adjustment === "true")
+                        : undefined;
 
                     const response = {
                         status_string: statusString,
@@ -168,6 +175,7 @@ export default function route(): WRoute {
                         upcoming_prayer: upcomingPrayer,
                         current_prayer_time_elapsed: currentPrayerTimeElapsed,
                         upcoming_prayer_time_left: upcomingPrayerTimeLeft,
+                        schedule,
                     };
 
                     return await reply.code(200).send(response);
@@ -352,4 +360,56 @@ function determineUpcomingPrayer(
         // After Isha - next prayer is Fajr (tomorrow)
         return "fajr";
     }
+}
+
+function generateSchedule(
+    start: Date,
+    days: number,
+    lat: number,
+    lng: number,
+    timezoneId: string,
+    applyAsrAdjustment: boolean
+) {
+    const schedule = [];
+    for (let i = 0; i < days; i++) {
+        const date = addDays(start, i);
+        const prayerTimes = new PrayerTimes(
+            { latitude: lat, longitude: lng },
+            date,
+            CalculationMethod.Karachi()
+        );
+
+        if (applyAsrAdjustment) {
+            prayerTimes.asr = new Date(
+                (prayerTimes.dhuhr.getTime() + prayerTimes.sunset.getTime()) / 2
+            );
+        }
+
+        const formatTime = (d: Date) => {
+            if (!d) return "N/A";
+            const zonedTime = toZonedTime(d, timezoneId);
+            return format(zonedTime, "h:mm a", { timeZone: timezoneId });
+        };
+
+        schedule.push({
+            date: format(toZonedTime(date, timezoneId), "yyyy-MM-dd", { timeZone: timezoneId }),
+            day: format(toZonedTime(date, timezoneId), "EEEE, MMMM do", { timeZone: timezoneId }),
+            times: {
+                fajr: formatTime(prayerTimes.fajr),
+                sunrise: formatTime(prayerTimes.sunrise),
+                dhuhr: formatTime(prayerTimes.dhuhr),
+                asr: formatTime(prayerTimes.asr),
+                sunset: formatTime(prayerTimes.sunset),
+                maghrib: formatTime(prayerTimes.maghrib),
+                isha: formatTime(prayerTimes.isha),
+            }
+        });
+    }
+    return schedule;
+}
+
+function addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
 }
