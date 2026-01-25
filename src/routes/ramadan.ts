@@ -122,21 +122,12 @@ export default function route(): WRoute {
                     year: `${year}`,
                     current_day: currentDay,
                     status_string: statusString,
+                    location_string: formattedAddress || query,
                     average_fasting_duration: averageDuration,
-                    location: {
-                        address: formattedAddress || query,
-                        city,
-                        country,
-                        latitude,
-                        longitude,
-                        timezone: timezoneId
-                    },
-                    summary: {
-                        first_fasting_day: formatDate(firstFastingDay, timezoneId),
-                        last_fasting_day: formatDate(lastFastingDay, timezoneId),
-                        night_of_destiny: formatDate(nightOfDestiny, timezoneId),
-                        begin_last_10_nights: formatDate(startLast10Nights, timezoneId),
-                    },
+                    first_fasting_day: formatDate(firstFastingDay, timezoneId),
+                    last_fasting_day: formatDate(lastFastingDay, timezoneId),
+                    night_of_destiny: formatDate(nightOfDestiny, timezoneId),
+                    begin_last_10_nights: formatDate(startLast10Nights, timezoneId),
                     moon_data: {
                         start: {
                             new_moon_utc: startNewMoon.toISOString(),
