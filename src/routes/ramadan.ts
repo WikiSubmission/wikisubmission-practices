@@ -79,7 +79,7 @@ export default function route(): WRoute {
                 } = ramadanDetails;
 
                 // 5. Generate Schedule
-                const schedule = generateSchedule(firstFastingDay, lastFastingDay, latitude, longitude, timezoneId);
+                const { schedule, averageDuration } = generateSchedule(firstFastingDay, lastFastingDay, latitude, longitude, timezoneId);
 
                 // Calculate current day
                 // Get local time now
@@ -122,6 +122,7 @@ export default function route(): WRoute {
                     year: `${year}`,
                     current_day: currentDay,
                     status_string: statusString,
+                    average_fasting_duration: averageDuration,
                     location: {
                         address: formattedAddress || query,
                         city,
@@ -289,6 +290,7 @@ function calculateRamadanDates(year: number, lat: number, lng: number, timezoneI
 
 function generateSchedule(start: Date, end: Date, lat: number, lng: number, timezoneId: string) {
     const schedule = [];
+    let totalDurationMs = 0;
 
     // We loop from day 0 to day N
     const totalDays = Math.round((end.getTime() - start.getTime()) / (86400 * 1000)) + 1;
@@ -303,6 +305,9 @@ function generateSchedule(start: Date, end: Date, lat: number, lng: number, time
 
         const formatTime = (d: Date) => format(toZonedTime(d, timezoneId), "h:mm a", { timeZone: timezoneId });
 
+        const durationMs = prayerTimes.maghrib.getTime() - prayerTimes.fajr.getTime();
+        totalDurationMs += durationMs;
+
         schedule.push({
             day_number: i + 1,
             day: format(toZonedTime(date, timezoneId), "EEE MMM d", { timeZone: timezoneId }),
@@ -312,9 +317,21 @@ function generateSchedule(start: Date, end: Date, lat: number, lng: number, time
             afternoon: formatTime(prayerTimes.asr),
             sunset: formatTime(prayerTimes.maghrib),
             night: formatTime(prayerTimes.isha),
+            fast_duration: formatDuration(durationMs)
         });
     }
-    return schedule;
+
+    const averageDurationMs = totalDurationMs / totalDays;
+    const averageDuration = formatDuration(averageDurationMs);
+
+    return { schedule, averageDuration };
+}
+
+function formatDuration(ms: number): string {
+    const totalMinutes = Math.round(ms / (1000 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return `${hours}h ${mins}m`;
 }
 
 function addDays(date: Date, days: number): Date {
