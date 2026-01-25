@@ -99,14 +99,11 @@ export default function route(): WRoute {
                 endMidnight.setHours(0, 0, 0, 0);
 
                 let currentDay = 0;
+                let statusString = "";
                 if (localNowMidnight.getTime() >= startMidnight.getTime() && localNowMidnight.getTime() <= endMidnight.getTime()) {
                     const diffTime = localNowMidnight.getTime() - startMidnight.getTime();
                     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                     currentDay = diffDays + 1;
-                }
-
-                let statusString = "";
-                if (currentDay > 0) {
                     statusString = `Today is Day ${currentDay} of Ramadan and ends on ${format(localLastFastingDay, "MMMM do", { timeZone: timezoneId })}.`;
                 } else if (localNowMidnight.getTime() < startMidnight.getTime()) {
                     const diffTime = startMidnight.getTime() - localNowMidnight.getTime();
@@ -115,6 +112,7 @@ export default function route(): WRoute {
                 } else {
                     const diffTime = localNowMidnight.getTime() - endMidnight.getTime();
                     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                    currentDay = -diffDays;
                     statusString = `Ramadan ended ${diffDays} day${diffDays === 1 ? "" : "s"} ago.`;
                 }
 
