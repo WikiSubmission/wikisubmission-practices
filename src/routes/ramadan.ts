@@ -104,7 +104,7 @@ export default function route(): WRoute {
                     const diffTime = localNowMidnight.getTime() - startMidnight.getTime();
                     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                     currentDay = diffDays + 1;
-                    statusString = `Today is Day ${currentDay} of Ramadan and ends on ${format(localLastFastingDay, "MMMM do", { timeZone: timezoneId })}.`;
+                    statusString = `Today is Day ${currentDay} of Ramadan!`;
                 } else if (localNowMidnight.getTime() < startMidnight.getTime()) {
                     const diffTime = startMidnight.getTime() - localNowMidnight.getTime();
                     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
