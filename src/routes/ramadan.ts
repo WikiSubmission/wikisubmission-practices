@@ -284,7 +284,16 @@ function generateSchedule(start: Date, end: Date, lat: number, lng: number, time
     let totalDurationMs = 0;
 
     // We loop from day 0 to day N
-    const totalDays = Math.round((end.getTime() - start.getTime()) / (86400 * 1000)) + 1;
+    const startLocal = toZonedTime(start, timezoneId);
+    const endLocal = toZonedTime(end, timezoneId);
+
+    // Normalize to midnight to get accurate day count based on local calendar days
+    const startMidnight = new Date(startLocal);
+    startMidnight.setHours(0, 0, 0, 0);
+    const endMidnight = new Date(endLocal);
+    endMidnight.setHours(0, 0, 0, 0);
+
+    const totalDays = Math.round((endMidnight.getTime() - startMidnight.getTime()) / (86400 * 1000)) + 1;
 
     for (let i = 0; i < totalDays; i++) {
         const date = addDays(start, i);
